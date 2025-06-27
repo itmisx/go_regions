@@ -45,10 +45,9 @@ func init() {
 	if err != nil {
 		log.Fatal("failed to open db with gorm:", err)
 	}
-	_db = _db.Debug()
 }
 
-type Region struct {
+type region struct {
 	ID    int64  `json:"id" gorm:"column:id"`
 	Name  string `json:"name" gorm:"column:name"`
 	Level int    `json:"level" gorm:"column:level"` // 0-省 1-市 2-区 3-街道
@@ -56,21 +55,21 @@ type Region struct {
 
 // RegionList 地区列表
 // pid为0时，获取的是省份列表
-func RegionList(pid int) []Region {
-	var records []Region
+func RegionList(pid int) []region {
+	var records []region
 	newDB().Table("regions").Where("pid = ?", pid).Find(&records)
 	return records
 }
 
 // RegionName 获取地区名称
 func RegionName(id int) string {
-	var record Region
+	var record region
 	newDB().Table("regions").Where("id = ?", id).Take(&record)
 	return record.Name
 }
 
-func RegionInfo(id int) *Region {
-	var record Region
+func RegionInfo(id int) *region {
+	var record region
 	newDB().Table("regions").Where("id = ?", id).Take(&record)
 	if record.ID == 0 {
 		return nil
