@@ -1,25 +1,24 @@
 package go_regions
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 )
 
 func TestXxx(*testing.T) {
-	provinceList := ProvinceList("")
-	cityList := CityList("410000000000")
-	countyList := CountyList("410400000000")
-	townList := TownList("410423000000")
-	provinceName := ProvinceName("410000000000")
-	cityName := CityName("410400000000")
-	countyName := CountyName("410423000000")
-	townName := TownName("410423202000")
-	fmt.Println("provinceList", provinceList)
-	fmt.Println("cityList", cityList)
-	fmt.Println("countyList", countyList)
-	fmt.Println("townList", townList)
-	fmt.Println("provinceName", provinceName)
-	fmt.Println("cityName", cityName)
-	fmt.Println("countyName", countyName)
-	fmt.Println("townName", townName)
+	list := RegionList(0)
+	js, _ := json.Marshal(list)
+	fmt.Println("list", string(js))
+	list = RegionList(int(list[0].ID))
+	fmt.Println("list", list)
+	list = RegionList(int(list[0].ID))
+	fmt.Println("list", list)
+	list = RegionList(int(list[0].ID))
+	fmt.Println("list", list)
+	regionName := RegionName(120000)
+	fmt.Println("regionName", regionName)
+	regionInfo := RegionInfo(120000)
+	js, _ = json.Marshal(regionInfo)
+	fmt.Println("regionInfo", string(js))
 }

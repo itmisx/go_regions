@@ -45,90 +45,35 @@ func init() {
 	if err != nil {
 		log.Fatal("failed to open db with gorm:", err)
 	}
+	_db = _db.Debug()
 }
 
-type provinceT struct {
-	Name       string `json:"name" gorm:"column:name"`
-	ProvinceID string `json:"id" gorm:"column:province_id"`
+type Region struct {
+	ID    int64  `json:"id" gorm:"column:id"`
+	Name  string `json:"name" gorm:"column:name"`
+	Level int    `json:"level" gorm:"column:level"` // 0-省 1-市 2-区 3-街道
 }
 
-// ProvinceList 省份列表
-func ProvinceList(provinceName string) []provinceT {
-	var records []provinceT
-	newDB().Table("province").Find(&records)
+// RegionList 地区列表
+// pid为0时，获取的是省份列表
+func RegionList(pid int) []Region {
+	var records []Region
+	newDB().Table("regions").Where("pid = ?", pid).Find(&records)
 	return records
 }
 
-type cityT struct {
-	Name   string `json:"name" gorm:"column:name"`
-	CityID string `json:"id" gorm:"column:city_id"`
+// RegionName 获取地区名称
+func RegionName(id int) string {
+	var record Region
+	newDB().Table("regions").Where("id = ?", id).Take(&record)
+	return record.Name
 }
 
-// CityList 城市列表
-func CityList(provinceID string) []cityT {
-	var records []cityT
-	tx := newDB().Table("city")
-	if provinceID != "" {
-		tx = tx.Where("province_id = ?", provinceID)
+func RegionInfo(id int) *Region {
+	var record Region
+	newDB().Table("regions").Where("id = ?", id).Take(&record)
+	if record.ID == 0 {
+		return nil
 	}
-	tx.Find(&records)
-	return records
-}
-
-type countyT struct {
-	Name     string `json:"name" gorm:"column:name"`
-	CountyID string `json:"id" gorm:"column:county_id"`
-}
-
-// CountyList 县区列表
-func CountyList(cityID string) []countyT {
-	var records []countyT
-	newDB().Table("county").
-		Where("city_id = ?", cityID).
-		Find(&records)
-	return records
-}
-
-type townT struct {
-	Name   string `json:"name" gorm:"column:name"`
-	TownID string `json:"id" gorm:"column:town_id"`
-}
-
-// TownList 乡镇街道
-func TownList(countyID string) []townT {
-	var records []townT
-	newDB().Table("town").
-		Where("county_id = ?", countyID).
-		Find(&records)
-	return records
-}
-
-// 获取id名称
-func ProvinceName(id string) string {
-	var record provinceT
-	newDB().Table("province").
-		Where("province_id = ?", id).
-		Take(&record)
-	return record.Name
-}
-func CityName(id string) string {
-	var record cityT
-	newDB().Table("city").
-		Where("city_id = ?", id).
-		Take(&record)
-	return record.Name
-}
-func CountyName(id string) string {
-	var record countyT
-	newDB().Table("county").
-		Where("county_id = ?", id).
-		Take(&record)
-	return record.Name
-}
-func TownName(id string) string {
-	var record townT
-	newDB().Table("town").
-		Where("town_id = ?", id).
-		Take(&record)
-	return record.Name
+	return &record
 }

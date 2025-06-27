@@ -2,18 +2,17 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-// 参考 https://github.com/wecatch/china_regions json数据
-// 最新数据为2020的数据
-
-//go:embed sql/*
-var embeddedRegionSQL embed.FS
+//go:embed data/*
+var embeddedRegionData embed.FS
 
 func main() {
 	os.Remove("db/go_regions.db")
@@ -21,49 +20,36 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to connect go_regions database:", err)
 	}
-
-	initSql, err := embeddedRegionSQL.ReadFile("sql/init.sql")
+	db = db.Debug()
+	initSql, err := embeddedRegionData.ReadFile("data/init.sql")
 	if err != nil {
 		log.Fatal("failed to read go_regions init_sql:", err)
 	}
-	err = db.Exec(string(initSql)).Error
-	if err != nil {
-		panic("faile to init go_regions init sql")
-	}
 
-	initSql, err = embeddedRegionSQL.ReadFile("sql/province.sql")
-	if err != nil {
-		log.Fatal("failed to read go_regions province sql:", err)
-	}
 	err = db.Exec(string(initSql)).Error
 	if err != nil {
 		panic("faile to init go_regions province sql")
 	}
 
-	initSql, err = embeddedRegionSQL.ReadFile("sql/city.sql")
+	regionsText, err := embeddedRegionData.ReadFile("data/regions.txt")
 	if err != nil {
-		log.Fatal("failed to read go_regions city sql:", err)
-	}
-	err = db.Exec(string(initSql)).Error
-	if err != nil {
-		panic("faile to init go_regions city sql")
-	}
 
-	initSql, err = embeddedRegionSQL.ReadFile("sql/county.sql")
-	if err != nil {
-		log.Fatal("failed to read go_regions county sql:", err)
 	}
-	err = db.Exec(string(initSql)).Error
-	if err != nil {
-		panic("faile to init go_regions county sql")
-	}
-
-	initSql, err = embeddedRegionSQL.ReadFile("sql/town.sql")
-	if err != nil {
-		log.Fatal("failed to read go_region town sql:", err)
-	}
-	err = db.Exec(string(initSql)).Error
-	if err != nil {
-		panic("faile to init go_regions town sql")
+	regionsTextRows := strings.Split(string(regionsText), "\n")
+	for index, row := range regionsTextRows {
+		if index < 1 {
+			continue
+		}
+		cols := strings.Split(row, ",")
+		// 不满足六位长度的补0
+		if len(cols[0]) < 6 {
+			cols[0] = cols[0] + strings.Repeat("0", 6-len(cols[0]))
+		}
+		if len(cols[1]) < 6 && cols[1] != "0" {
+			cols[1] = cols[1] + strings.Repeat("0", 6-len(cols[1]))
+		}
+		insertSql := fmt.Sprintf("INSERT INTO regions ('id', 'pid', 'level','pinyin_prefix','pinyin','name') VALUES (%s,%s,%s,%s,%s,%s)",
+			cols[0], cols[1], cols[2], cols[4], cols[5], cols[7])
+		db.Exec(insertSql)
 	}
 }
